@@ -14,7 +14,6 @@
     --bg2:#f3edff;
     --pill-bg:#ffffff;
     --pill-border:#ece9ff;
-    --pill-shadow: 0 18px 46px rgba(0,0,0,.08);
   }
 
   *{box-sizing:border-box}
@@ -34,246 +33,198 @@
     display:flex;
     align-items:center;
     gap:12px;
-    padding:20px 24px;
+    padding:18px 22px;
   }
-  header img{width:44px;height:44px;border-radius:12px;object-fit:cover}
+  header img{width:44px;height:44px;border-radius:10px;object-fit:cover}
   .title{font-weight:800;font-size:18px}
 
-  main{flex:1; display:flex; align-items:center; justify-content:center; padding:24px}
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
 
-  /* Container for pills — centers them and constrains width */
-  .pills-stage{
+  /* Stage centers the pills */
+  .stage {
     width:100%;
-    max-width:1200px;
+    max-width:1100px;
+    padding:18px;
     display:flex;
-    gap:20px;
+    gap:18px;
     align-items:center;
     justify-content:center;
     flex-wrap:wrap;
-    padding:18px;
   }
 
-  /* Pill base (wide rounded capsule) */
+  /* Pill appearance */
   .pill {
-    display:flex;
-    flex-direction:row;
-    align-items:center;
-    gap:18px;
-    min-width:300px;
-    max-width:36%;
     background:var(--pill-bg);
     border:1px solid var(--pill-border);
-    border-radius:999px;
+    border-radius:999px;               /* pill shape */
     padding:18px 22px;
-    box-shadow:var(--pill-shadow);
-    transition:transform .22s ease, box-shadow .22s ease;
+    min-width:280px;
+    max-width:360px;                   /* cap width so pills are consistent */
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    box-shadow:0 18px 46px rgba(0,0,0,.08);
+    transition:transform .18s ease, box-shadow .18s ease;
+    overflow:hidden;                   /* ensures nothing exceeds pill */
     position:relative;
-    overflow:visible;
-  }
-
-  /* make the pill content flow nicely in two columns inside pill */
-  .pill-content{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    min-width:0;
-    flex:1;
-  }
-
-  .pill-left{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    min-width:0;
-    flex:1;
-  }
-
-  .pill-right{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    align-items:flex-end;
-    white-space:nowrap;
-  }
-
-  .pill .name{font-weight:900; font-size:16px; line-height:1; margin:0}
-  .pill .price{font-weight:900; color:#111; margin-top:2px}
-  .pill .small{font-size:13px; color:#444}
-  .pill ul{margin:8px 0 0 16px; padding:0; list-style:disc}
-  .pill ul li{margin:6px 0; font-size:14px}
-
-  .pill .cta{
-    display:inline-block;
-    padding:10px 14px;
-    border-radius:999px;
-    text-decoration:none;
-    font-weight:800;
-    font-size:14px;
-  }
-  .cta.primary{color:#fff;background:linear-gradient(130deg,var(--mint),var(--lav))}
-  .cta.dark{color:#fff;background:#0f1115}
-  .cta.ghost{border:1px solid #ddd;color:#111;background:transparent;padding:9px 12px;border-radius:999px}
-
-  /* Floating animation (gentle) */
-  .pill {
-    animation: floaty 6s ease-in-out infinite;
     will-change:transform;
+    /* gentle float */
+    animation: floaty 6s ease-in-out infinite;
   }
-  .pill:nth-child(1){ animation-delay:0s; }
-  .pill:nth-child(2){ animation-delay:0.8s; }
-  .pill:nth-child(3){ animation-delay:1.5s; }
+  .pill:hover{ transform:translateY(-8px) scale(1.01); box-shadow:0 36px 80px rgba(0,0,0,.12); }
 
   @keyframes floaty{
-    0%{ transform: translateY(0px); }
-    50%{ transform: translateY(-10px); }
-    100%{ transform: translateY(0px); }
+    0%{ transform: translateY(0); }
+    50%{ transform: translateY(-8px); }
+    100%{ transform: translateY(0); }
   }
 
-  /* Hover lift */
-  .pill:hover{ transform: translateY(-10px) scale(1.01); box-shadow: 0 36px 80px rgba(0,0,0,.12); }
+  /* ensure the contents wrap and fit */
+  .pill .heading {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .pill .name{ font-weight:900; font-size:16px; line-height:1.05; margin:0; }
+  .pill .price{ font-weight:900; font-size:15px; color:#111; }
+  .pill .meta{ color:#444; font-size:13px }
+  .pill ul{ margin:8px 0 0 18px; padding:0; font-size:14px; color:#222 }
+  .pill ul li{ margin:6px 0; line-height:1.3 }
 
-  /* Badges */
-  .badge{background:var(--mint); color:#fff; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800}
-  .badge.alt{background:var(--lav)}
+  .actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
 
-  /* Mastery (fiery pill) */
-  .pill.mastery{
-    background: linear-gradient(90deg,#ff8a00 0%, #ff6a00 40%, #ffd27f 100%);
+  .btn {
+    padding:10px 14px; border-radius:999px; text-decoration:none; font-weight:800; font-size:14px;
+  }
+  .btn.primary { background:linear-gradient(130deg,var(--mint),var(--lav)); color:#fff; border:0; }
+  .btn.ghost { background:transparent; color:var(--ink); border:1px solid #ddd; }
+  .btn.dark { background:#0f1115; color:#fff; border:0; }
+
+  .badge { background:var(--mint); color:#fff; padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px; }
+  .badge.alt { background:var(--lav); }
+
+  /* Mastery fiery pill */
+  .pill.mastery {
+    background: linear-gradient(90deg,#ff7a18 0%, #ffb347 60%, #ffd27f 100%);
     color:#1b0b02;
     border:1px solid rgba(255,120,0,0.18);
-    box-shadow: 0 26px 70px rgba(255,120,0,0.09), inset 0 -6px 20px rgba(255,255,255,0.06);
+    box-shadow:0 22px 60px rgba(255,120,0,0.09);
   }
-  .pill.mastery .name, .pill.mastery .price, .pill.mastery li { color: #1b0b02; }
+  .pill.mastery .name, .pill.mastery .price, .pill.mastery ul li { color:#1b0b02; }
+  .pill.mastery .badge { background:#ffe8c8; color:#8b2b00; font-weight:800; }
 
-  .pill.mastery::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    mix-blend-mode:overlay;
-    opacity:0.35;
-    animation: masteryFlicker 4s linear infinite;
-  }
-  @keyframes masteryFlicker{
-    0%{opacity:.32; transform:translateY(0)}
-    50%{opacity:.42; transform:translateY(-3px)}
-    100%{opacity:.32; transform:translateY(0)}
-  }
+  /* layout helpers so content stays inside pill */
+  .top-row { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+  .mid-row { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+  .bottom-row { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
 
-  /* Responsive: stack vertically and full width on small screens */
+  /* responsive: full-width pills on narrow screens */
   @media (max-width:980px){
-    .pill { max-width:100%; min-width:260px; }
-    .pill-right { align-items:flex-start; text-align:left; white-space:normal; }
+    .pill { max-width:100%; min-width:220px; }
+    .stage { gap:12px; padding:12px; }
+    .actions { justify-content:flex-start; width:100%; }
   }
 
-  /* Back link */
-  .back {
-    display:inline-block;
-    margin:16px auto 28px;
-    padding:10px 14px;
-    border-radius:999px;
-    background:#0f1115;
-    color:#fff;
-    text-decoration:none;
-    font-weight:800;
-    align-self:center;
-  }
+  /* back link */
+  .back { display:inline-block; margin:18px auto 28px; padding:10px 14px; border-radius:999px; background:#0f1115; color:#fff; text-decoration:none; font-weight:800; align-self:center; }
 
-  /* Countdown widget style (positioned bottom-left) */
+  /* countdown timer bottom-left */
   .timer {
-    position:fixed;
-    left:16px;
-    bottom:16px;
-    z-index:30;
-    background:#0f1115;
-    color:#fff;
-    border-radius:12px;
-    padding:10px 14px;
-    box-shadow:0 12px 28px rgba(0,0,0,.18);
-    font-weight:800;
-    display:flex;
-    align-items:center;
-    gap:8px;
+    position:fixed; left:16px; bottom:16px; z-index:30;
+    background:#0f1115; color:#fff; border-radius:12px; padding:10px 14px;
+    box-shadow:0 12px 28px rgba(0,0,0,.18); font-weight:800; display:flex; align-items:center; gap:8px;
   }
-  .timer small{ opacity:.8; font-weight:600; font-size:13px; }
-
+  .timer small{opacity:.85; font-size:13px}
 </style>
 </head>
 <body>
-
   <header>
     <img src="assets/logo.jpg" alt="Menti logo" />
     <div class="title">Menti Plans</div>
   </header>
 
   <main>
-    <div class="pills-stage" role="list" aria-label="Pricing plans">
-      <!-- Starter (Free) -->
+    <div class="stage" role="list" aria-label="Pricing plans">
+      <!-- Starter -->
       <article class="pill" role="listitem" aria-labelledby="starter-title">
-        <div class="pill-content pill-left">
-          <div id="starter-title" class="name">Starter 🩵 (Free)</div>
+        <div class="top-row">
+          <div class="heading">
+            <div id="starter-title" class="name">Starter 🩵</div>
+            <div class="meta" style="margin-left:6px;">(Free)</div>
+          </div>
           <div class="price">$0</div>
-          <div class="small">Teach-by-explaining chat · Quick summary</div>
-          <ul>
-            <li>Teach-by-explaining chat</li>
-            <li>Smart questions + quick summary</li>
-            <li><strong>Limit:</strong> 15 messages/day</li>
-          </ul>
         </div>
 
-        <div class="pill-right">
-          <a class="cta primary" href="chat.html">Start for Free</a>
+        <div class="mid-row">
+          <div class="meta">Teach-by-explaining chat • Quick summary</div>
+        </div>
+
+        <ul>
+          <li>Teach-by-explaining chat</li>
+          <li>Smart questions + quick summary</li>
+          <li><strong>Limit:</strong> 15 messages/day</li>
+        </ul>
+
+        <div class="bottom-row">
+          <div class="actions">
+            <a class="btn primary" href="chat.html">Start for Free</a>
+          </div>
         </div>
       </article>
 
       <!-- Booster -->
       <article class="pill" role="listitem" aria-labelledby="booster-title">
-        <div class="pill-content pill-left">
-          <div style="display:flex;align-items:center;gap:10px;">
+        <div class="top-row">
+          <div class="heading">
             <div id="booster-title" class="name">Booster 💫</div>
-            <div class="badge alt" aria-hidden="true" style="font-size:12px;">Limited offer</div>
+            <div class="badge alt" aria-hidden="true" style="margin-left:6px;">Limited</div>
           </div>
-
-          <div class="price">$3.49 / month · or $14.99 lifetime</div>
-          <div class="small">Flashcards, recall review & more</div>
-          <ul>
-            <li>Everything in Starter</li>
-            <li>Flashcards + Recall review</li>
-            <li><strong>Limit:</strong> 60 messages/day</li>
-          </ul>
+          <div class="price">$3.49 / mo</div>
         </div>
 
-        <div class="pill-right">
-          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-            <a class="cta primary" href="https://dhruvprasad.gumroad.com/l/lghflw?offer_code=MENTI10" target="_blank" rel="noopener">Get Booster — $3.49/mo</a>
-            <a class="cta ghost" href="https://dhruvprasad.gumroad.com/l/lghflw" target="_blank" rel="noopener">Buy Lifetime — $14.99</a>
-            <div class="tiny" style="margin-top:6px; text-align:right;">Intro price • Use code <strong>MENTI10</strong> on monthly</div>
+        <div class="mid-row">
+          <div class="meta">Flashcards, recall review & study boosters</div>
+        </div>
+
+        <ul>
+          <li>Everything in Starter</li>
+          <li>Flashcards + Recall review</li>
+          <li><strong>Limit:</strong> 60 messages/day</li>
+        </ul>
+
+        <div class="bottom-row">
+          <div class="actions">
+            <a class="btn primary" href="https://dhruvprasad.gumroad.com/l/lghflw?offer_code=MENTI10" target="_blank" rel="noopener">Get Booster — $3.49/mo</a>
+            <a class="btn ghost" href="https://dhruvprasad.gumroad.com/l/lghflw" target="_blank" rel="noopener">Lifetime — $14.99</a>
           </div>
         </div>
       </article>
 
-      <!-- Mastery (fiery pill) -->
+      <!-- Mastery -->
       <article class="pill mastery" role="listitem" aria-labelledby="mastery-title">
-        <div class="pill-content pill-left">
-          <div style="display:flex;align-items:center;gap:10px;">
+        <div class="top-row">
+          <div class="heading">
             <div id="mastery-title" class="name">Mastery 🧠</div>
-            <div class="badge" aria-hidden="true">Most Popular</div>
+            <div class="badge" aria-hidden="true" style="margin-left:6px;">Most Popular</div>
           </div>
-
-          <div class="price">$4.49 / month · or $24.99 lifetime</div>
-          <div class="small">Unlimited, Cornell notes & clinical case mode</div>
-          <ul>
-            <li>Unlimited messages</li>
-            <li>Cornell notes + Export</li>
-            <li>Clinical case mode</li>
-          </ul>
+          <div class="price">$4.49 / mo</div>
         </div>
 
-        <div class="pill-right">
-          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-            <a class="cta dark" href="https://dhruvprasad.gumroad.com/l/lghflw?offer_code=MENTI10" target="_blank" rel="noopener">Go Mastery — $4.49/mo</a>
-            <a class="cta ghost" href="https://dhruvprasad.gumroad.com/l/lghflw" target="_blank" rel="noopener">Buy Lifetime — $24.99</a>
-            <div class="tiny" style="margin-top:6px; text-align:right;">Only $1 more than Booster • Intro price</div>
+        <div class="mid-row">
+          <div class="meta">Unlimited messages • Notes • Clinical cases</div>
+        </div>
+
+        <ul>
+          <li>Unlimited messages</li>
+          <li>Cornell notes + Export</li>
+          <li>Clinical case mode</li>
+        </ul>
+
+        <div class="bottom-row">
+          <div class="actions">
+            <a class="btn dark" href="https://dhruvprasad.gumroad.com/l/lghflw?offer_code=MENTI10" target="_blank" rel="noopener">Go Mastery — $4.49/mo</a>
+            <a class="btn ghost" href="https://dhruvprasad.gumroad.com/l/lghflw" target="_blank" rel="noopener">Lifetime — $24.99</a>
           </div>
         </div>
       </article>
@@ -282,30 +233,34 @@
 
   <a class="back" href="index.html">← Back to Home</a>
 
-  <!-- Countdown widget (bottom-left) -->
+  <!-- Countdown widget -->
   <div class="timer" id="timer" role="status" aria-live="polite">
-    <span>⏳ Sale ends in <span id="countdown">--:--:--</span></span>
+    <span>⏳ Sale ends in <strong id="countdown">--:--:--</strong></span>
+    <small style="opacity:.85;margin-left:8px;">(Intro prices)</small>
   </div>
 
 <script>
-  // Simple 48h rolling countdown per device (stored in localStorage)
+  // 48-hour rolling countdown stored on device
   (function(){
     const KEY='menti_sale_end_ts';
     const now=Date.now();
-    let end=parseInt(localStorage.getItem(KEY)||'0',10);
-    if(!end || end<now){ end = now + 48*60*60*1000; localStorage.setItem(KEY, String(end)); }
-
-    const el=document.getElementById('countdown');
-    const tick=()=> {
+    let end = parseInt(localStorage.getItem(KEY) || '0', 10);
+    if (!end || end < now) {
+      end = now + 48*60*60*1000;
+      localStorage.setItem(KEY, String(end));
+    }
+    const el = document.getElementById('countdown');
+    function tick(){
       const t = end - Date.now();
-      if (t<=0){ el.textContent='00:00:00'; return; }
-      const h = Math.floor(t/3600000);
-      const m = Math.floor((t%3600000)/60000);
-      const s = Math.floor((t%60000)/1000);
-      const pad = n => String(n).padStart(2,'0');
+      if (t <= 0) { el.textContent = '00:00:00'; return; }
+      const h = Math.floor(t / 3600000);
+      const m = Math.floor((t % 3600000) / 60000);
+      const s = Math.floor((t % 60000) / 1000);
+      const pad = n => String(n).padStart(2, '0');
       el.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
-    };
-    tick(); setInterval(tick, 1000);
+    }
+    tick();
+    setInterval(tick, 1000);
   })();
 </script>
 </body>
