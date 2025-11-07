@@ -1,1 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Menti — Teach & Quiz (Chat)</title>
+<meta name="description" content="Choose an avatar & background, teach Menti by typing, recording audio or uploading an image. Menti will respond and ask questions."/>
+<style>
+  :root{
+    --mint:#0FD3A0; --lav:#B68CFF; --ink:#0f1115; --muted:#6b7280; --card:#ffffff;
+    --glass: rgba(255,255,255,0.65);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%; margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; background:linear-gradient(180deg,#f0fffb,#f8f5ff); color:var(--ink)}
+  .wrap{max-width:1150px;margin:18px auto;padding:18px; display:grid; gap:18px; grid-template-columns:320px 1fr}
+  @media (max-width:900px){ .wrap{grid-template-columns:1fr; padding:12px} }
 
+  /* LEFT: avatar + background selection */
+  .left { background:var(--card); border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(2,6,23,.06); display:flex; flex-direction:column; gap:12px;}
+  .title{font-weight:800; font-size:18px}
+  .sub{color:var(--muted); font-size:13px}
+
+  .avatars { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap }
+  .avatar { width:140px; background:linear-gradient(180deg,#fff,#fbfbff); border-radius:12px; padding:8px; cursor:pointer; border:2px solid transparent; display:flex; flex-direction:column; align-items:center; gap:8px; transition:transform .12s, border-color .12s, box-shadow .12s}
+  .avatar:hover{ transform:translateY(-6px); }
+  .avatar.selected{ border-color:rgba(15,17,21,.08); box-shadow:0 18px 46px rgba(2,6,23,.06); transform:translateY(-6px) }
+
+  .avatar svg{ width:84px; height:84px; display:block }
+  .avatar label{ font-weight:700; font-size:14px }
+
+  .bg-chooser{ margin-top:6px; display:flex; gap:8px; flex-wrap:wrap }
+  .bg-thumb{ width:88px; height:64px; border-radius:10px; overflow:hidden; cursor:pointer; border:2px solid transparent; background:#fff }
+  .bg-thumb.selected{ border-color:rgba(15,17,21,.12); box-shadow:0 12px 30px rgba(2,6,23,.06) }
+
+  .hint{ color:var(--muted); font-size:13px; margin-top:6px }
+
+  .reset{ margin-top:auto; background:transparent; border:0; color:var(--muted); text-decoration:underline; cursor:pointer; padding:6px 0; font-size:13px; align-self:flex-start }
+
+  /* RIGHT: chat area */
+  .right{ display:flex; flex-direction:column; gap:12px }
+  .chat-card{ background:var(--card); border-radius:14px; padding:16px; box-shadow:0 12px 36px rgba(2,6,23,.06); min-height:520px; display:flex; flex-direction:column }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .topbar h2{ margin:0; font-size:18px }
+  .small{ color:var(--muted); font-size:13px }
+
+  .stage{ display:flex; gap:18px; align-items:flex-start; margin-top:14px }
+  .avatar-large{ width:120px; height:120px; border-radius:12px; background:var(--glass); display:flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(2,6,23,.06) }
+  .thought { position:relative; background:var(--card); border-radius:14px; padding:12px 14px; box-shadow:0 12px 30px rgba(2,6,23,.06); font-weight:700; max-width:64%; }
+  .thought:after{ content:''; position:absolute; left:28px; bottom:-10px; width:0; height:0; border-top:10px solid var(--card); border-left:8px solid transparent; border-right:8px solid transparent; }
+
+  .messages{ margin-top:14px; overflow:auto; flex:1; padding-right:6px; display:flex; flex-direction:column; gap:10px }
+  .msg-row{ display:flex; gap:8px; align-items:flex-start }
+  .msg.bot{ align-self:flex-start; background:var(--card); padding:10px 12px; border-radius:12px; box-shadow:0 8px 20px rgba(2,6,23,.04); max-width:78%; }
+  .msg.you{ align-self:flex-end; background:linear-gradient(180deg,#e6fff6,#d6fff0); padding:10px 12px; border-radius:12px; font-weight:700; max-width:78%; box-shadow:0 8px 20px rgba(2,6,23,.04) }
+  .msg img{ max-width:220px; border-radius:10px; display:block; }
+
+  .composer{ margin-top:12px; display:flex; gap:10px; align-items:flex-end; }
+  textarea{ flex:1; min-height:78px; border-radius:12px; border:1px solid #e6e8ef; padding:10px 12px; font-size:15px; resize:vertical; font-family:inherit }
+  .controls{ display:flex; gap:8px; flex-direction:column; align-items:flex-end; min-width:120px }
+  .btn{ padding:10px 12px; border-radius:10px; font-weight:800; border:0; cursor:pointer }
+  .send{ background:linear-gradient(130deg,var(--mint),var(--lav)); color:#fff }
+  .upload{ background:#fff; border:1px solid #ddd; color:var(--ink) }
+
+  .small-muted{ font-size:12px; color:var(--muted) }
+
+  /* mic button */
+  .mic { display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; background:#fff; border:1px solid #ddd; cursor:pointer }
+  .mic.recording{ background:#ffefef; border-color:#ff9a9a }
+
+  /* background display area for chat-card */
+  .chat-bg {
+    position:absolute; inset:0; border-radius:14px; opacity:0.09; pointer-events:none; z-index:0;
+    background-repeat:no-repeat; background-position:center; background-size:cover;
+  }
+  /* ensure main content sits above background */
+  .chat-card > * { position:relative; z-index:1 }
+
+  /* small screens */
+  @media (max-width:900px){
+    .avatar-large{ width:92px; height:92px }
+    .thought{ max-width:100% }
+    .messages{ max-height:260px }
+    textarea{ min-height:68px }
+    .controls{ min-width:80px }
+  }
+
+  /* loading */}
+  .spinner{ width:18px; height:18px; border-radius:50%; border:3px solid rgba(0,0,0,.08); border-top-color:var(--mint); animation:spin 1s linear infinite }
+  @keyframes spin { to{ transform:rotate(360deg) } }
+</style>
+</head>
+<body>
+
+<div class="wrap" role="main">
+  <!-- LEFT -->
+  <aside class="left" aria-label="Avatar and background selection">
+    <div>
+      <div class="title">Choose a Menti student</div>
+      <div class="sub">Pick a cute avatar, then choose the study background (cartoonish).</div>
+    </div>
+
+    <div class="avatars" role="list" aria-label="Avatar choices">
+      <!-- Male -->
+      <div class="avatar" id="avatarMale" role="button" tabindex="0" aria-pressed="false">
+        <!-- simple cartoon male doctor -->
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><linearGradient id="mg1" x1="0" x2="1"><stop offset="0" stop-color="#ffeecb"/><stop offset="1" stop-color="#ffd3a1"/></linearGradient></defs>
+          <rect x="6" y="6" width="108" height="108" rx="18" fill="url(#mg1)"/>
+          <g transform="translate(18,18)">
+            <circle cx="42" cy="30" r="22" fill="#ffe0c7"/>
+            <path d="M24 18 C32 8, 52 8, 60 18" fill="#3b2f2f"/>
+            <circle cx="34" cy="30" r="3" fill="#2b2b2b"/>
+            <circle cx="50" cy="30" r="3" fill="#2b2b2b"/>
+            <path d="M34 40 Q42 46 50 40" stroke="#7a4b2b" stroke-width="2" fill="transparent" stroke-linecap="round"/>
+            <rect x="8" y="54" width="68" height="20" rx="6" fill="#e6f6f0"/>
+            <path d="M18 52 v-6 a6 6 0 0 1 6 -6 h28 a6 6 0 0 1 6 6 v6" fill="#d7eaf4"/>
+          </g>
+        </svg>
+        <label>Male</label>
+      </div>
+
+      <!-- Female -->
+      <div class="avatar" id="avatarFemale" role="button" tabindex="0" aria-pressed="false">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><linearGradient id="fg1" x1="0" x2="1"><stop offset="0" stop-color="#fff0f1"/><stop offset="1" stop-color="#ffd3e0"/></linearGradient></defs>
+          <rect x="6" y="6" width="108" height="108" rx="18" fill="url(#fg1)"/>
+          <g transform="translate(18,18)">
+            <circle cx="42" cy="30" r="22" fill="#ffe6d1"/>
+            <path d="M26 18 C30 10, 54 10, 58 18" fill="#3b2f2f"/>
+            <circle cx="34" cy="30" r="3" fill="#2b2b2b"/>
+            <circle cx="50" cy="30" r="3" fill="#2b2b2b"/>
+            <path d="M34 42 Q42 46 50 42" stroke="#7a4b2b" stroke-width="2" fill="transparent" stroke-linecap="round"/>
+            <rect x="8" y="54" width="68" height="20" rx="6" fill="#fff7e6"/>
+            <path d="M18 52 v-6 a6 6 0 0 1 6 -6 h28 a6 6 0 0 1 6 6 v6" fill="#e9e6ff"/>
+          </g>
+        </svg>
+        <label>Female</label>
+      </div>
+    </div>
+
+    <div style="margin-top:8px">
+      <div class="sub" style="margin-bottom:8px">Choose background</div>
+      <div class="bg-chooser" role="list" aria-label="Background choices">
+        <div class="bg-thumb" id="bgLibrary" title="Library (quiet)"></div>
+        <div class="bg-thumb" id="bgCoffee" title="Coffee shop (cozy)"></div>
+        <div class="bg-thumb" id="bgGarden" title="Garden (fresh)"></div>
+      </div>
+      <div class="hint">Backgrounds are cartoon-style and set the mood while you teach.</div>
+    </div>
+
+    <div class="hint">You can change avatar or background anytime. Choices are saved locally.</div>
+
+    <button class="reset" id="resetBtn">Reset choices</button>
+  </aside>
+
+  <!-- RIGHT: chat -->
+  <main class="right" aria-live="polite">
+    <div class="chat-card" role="region" aria-label="Menti chat">
+      <div class="chat-bg" id="chatBg" aria-hidden="true"></div>
+
+      <div class="topbar">
+        <h2>Menti — Teach & Quiz</h2>
+        <div class="small">Type, record audio, or upload an image</div>
+      </div>
+
+      <!-- avatar + thought -->
+      <div class="stage">
+        <div class="avatar-large" id="largeAvatar" aria-hidden="true">
+          <!-- placeholder svg injected by JS -->
+        </div>
+
+        <div style="flex:1">
+          <div class="thought" id="thoughtBubble">Choose an avatar to begin — I’ll ask the first question!</div>
+          <div class="small-muted" style="margin-top:8px">Tip: be conversational — explain the topic as you would to a friend.</div>
+        </div>
+      </div>
+
+      <!-- messages -->
+      <div class="messages" id="messages" role="log" aria-live="polite"></div>
+
+      <!-- composer -->
+      <div class="composer" role="form" aria-label="Message composer">
+        <textarea id="textInput" placeholder="Type your explanation here (or record/upload)." aria-label="Type your explanation"></textarea>
+
+        <div class="controls">
+          <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
+            <label style="display:flex;gap:8px;align-items:center">
+              <input type="file" id="imageInput" accept="image/*" style="display:none" />
+              <button class="btn upload" id="imageBtn" title="Upload image">📷 Upload</button>
+            </label>
+
+            <button class="mic" id="micBtn" title="Record audio">
+              <span id="micIcon">🎤</span>
+              <span id="micText">Record</span>
+            </button>
+
+            <button class="btn send" id="sendBtn">Send</button>
+          </div>
+
+          <div style="margin-top:6px;text-align:right">
+            <div class="small-muted">Messages used: <span id="meter">0</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+/* ---------- State & DOM ---------- */
+const avatarMale = document.getElementById('avatarMale');
+const avatarFemale = document.getElementById('avatarFemale');
+const avatars = [avatarMale, avatarFemale];
+const bgLibrary = document.getElementById('bgLibrary');
+const bgCoffee = document.getElementById('bgCoffee');
+const bgGarden = document.getElementById('bgGarden');
+const bgThumbs = [bgLibrary, bgCoffee, bgGarden];
+const resetBtn = document.getElementById('resetBtn');
+
+const largeAvatar = document.getElementById('largeAvatar');
+const thought = document.getElementById('thoughtBubble');
+const chatBg = document.getElementById('chatBg');
+const messagesEl = document.getElementById('messages');
+const textInput = document.getElementById('textInput');
+const sendBtn = document.getElementById('sendBtn');
+const meterEl = document.getElementById('meter');
+const imageBtn = document.getElementById('imageBtn');
+const imageInput = document.getElementById('imageInput');
+const micBtn = document.getElementById('micBtn');
+const micIcon = document.getElementById('micIcon');
+const micText = document.getElementById('micText');
+
+let state = {
+  avatar: localStorage.getItem('menti_avatar') || null,            // 'male' | 'female'
+  bg: localStorage.getItem('menti_bg') || null,                  // 'library' | 'coffee' | 'garden'
+  messages: [{role:'system', content: "You are Menti — an AI medical student for education. The user teaches you; ask 2-3 thoughtful questions, give a brief summary, and end with an encouraging sentence about becoming a good doctor. Do not provide medical treatment advice; keep it educational."}],
+  meter: 0,
+  recorder: null,
+  mediaChunks: []
+};
+
+/* ---------- lightweight inline SVG backgrounds (cartoonish) as data URIs ---------- */
+const BG_SVGS = {
+  library: encodeURIComponent(`
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'>
+      <rect width='100%' height='100%' fill='#f4f8fb'/>
+      <g transform='translate(60,40)'>
+        <rect x='0' y='0' width='680' height='420' rx='18' fill='#fff'/>
+        <g transform='translate(30,30)'>
+          <rect x='0' y='0' width='600' height='340' fill='#fefefe' stroke='#f0f4f8' stroke-width='2'/>
+          <g transform='translate(20,18)'>
+            <rect x='0' y='0' width='120' height='260' fill='#ffe6c8' rx='8' />
+            <rect x='140' y='0' width='120' height='260' fill='#ffd7e0' rx='8' />
+            <rect x='280' y='0' width='120' height='260' fill='#d7f2f0' rx='8' />
+            <rect x='420' y='0' width='120' height='260' fill='#d9e6ff' rx='8' />
+          </g>
+        </g>
+      </g>
+    </svg>`),
+
+  coffee: encodeURIComponent(`
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'>
+      <rect width='100%' height='100%' fill='#fff9f4'/>
+      <g transform='translate(40,40)'>
+        <rect x='0' y='0' width='720' height='420' rx='18' fill='#fff'/>
+        <g transform='translate(40,40)'>
+          <circle cx='120' cy='120' r='48' fill='#f6e6d6'/>
+          <rect x='220' y='40' width='360' height='260' rx='12' fill='#fff2e6' stroke='#f0e3d8'/>
+          <g transform='translate(260,80)'>
+            <rect x='0' y='0' width='40' height='8' rx='4' fill='#e6d2c1'/>
+            <rect x='0' y='20' width='120' height='8' rx='4' fill='#e6d2c1'/>
+          </g>
+        </g>
+      </g>
+    </svg>`),
+
+  garden: encodeURIComponent(`
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'>
+      <rect width='100%' height='100%' fill='#f2fff6'/>
+      <g transform='translate(40,40)'>
+        <rect x='0' y='0' width='720' height='420' rx='18' fill='#fff'/>
+        <g transform='translate(60,40)'>
+          <ellipse cx='220' cy='260' rx='220' ry='80' fill='#daf7d6'/>
+          <g transform='translate(60,40)'>
+            <circle cx='30' cy='30' r='12' fill='#9fe39f'/>
+            <circle cx='80' cy='10' r='10' fill='#7fd792'/>
+            <circle cx='140' cy='40' r='14' fill='#9fe39f'/>
+            <rect x='200' y='10' width='10' height='60' rx='4' fill='#7fd792'/>
+          </g>
+        </g>
+      </g>
+    </svg>`)
+};
+
+/* set thumbnail backgrounds for chooser thumbnails */
+bgLibrary.style.backgroundImage = `url("data:image/svg+xml;utf8,${BG_SVGS.library}")`;
+bgLibrary.style.backgroundSize = 'cover';
+bgCoffee.style.backgroundImage = `url("data:image/svg+xml;utf8,${BG_SVGS.coffee}")`;
+bgCoffee.style.backgroundSize = 'cover';
+bgGarden.style.backgroundImage = `url("data:image/svg+xml;utf8,${BG_SVGS.garden}")`;
+bgGarden.style.backgroundSize = 'cover';
+
+/* ---------- avatar SVGs for large display (strings) ---------- */
+const AVATARS = {
+  male: `<svg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' rx='16' fill='#e7fffb'/><g transform='translate(20,18)'><circle cx='60' cy='30' r='26' fill='#ffe0c7'/><path d='M42 22 C52 12, 68 12, 78 22' fill='#3b2f2f'/><circle cx='52' cy='30' r='3' fill='#2b2b2b'/><circle cx='68' cy='30' r='3' fill='#2b2b2b'/><path d='M52 40 Q60 46 68 40' stroke='#7a4b2b' stroke-width='2' fill='transparent'/><rect x='22' y='62' width='76' height='22' rx='8' fill='#e6f6f0'/></g></svg>`,
+  female: `<svg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' rx='16' fill='#fff6fb'/><g transform='translate(20,18)'><circle cx='60' cy='30' r='26' fill='#ffe6d1'/><path d='M48 22 C56 12, 68 12, 76 22' fill='#3b2f2f'/><circle cx='52' cy='30' r='3' fill='#2b2b2b'/><circle cx='68' cy='30' r='3' fill='#2b2b2b'/><path d='M52 42 Q60 46 68 42' stroke='#7a4b2b' stroke-width='2' fill='transparent'/><rect x='22' y='62' width='76' height='22' rx='8' fill='#fff7e6'/></g></svg>`
+};
+
+/* ---------- helpers ---------- */
+function saveState(){ localStorage.setItem('menti_avatar', state.avatar || ''); localStorage.setItem('menti_bg', state.bg || ''); }
+function setSelectedAvatar(key){
+  state.avatar = key;
+  avatars.forEach(a => a.classList.remove('selected'));
+  if(key==='male') avatarMale.classList.add('selected');
+  else if(key==='female') avatarFemale.classList.add('selected');
+  renderLargeAvatar();
+  saveState();
+  setStarterThought();
+}
+function setSelectedBg(key){
+  state.bg = key;
+  bgThumbs.forEach(b => b.classList.remove('selected'));
+  if(key==='library') bgLibrary.classList.add('selected');
+  if(key==='coffee') bgCoffee.classList.add('selected');
+  if(key==='garden') bgGarden.classList.add('selected');
+  chatBg.style.backgroundImage = `url("data:image/svg+xml;utf8,${BG_SVGS[key]}")`;
+  chatBg.style.backgroundSize = 'cover';
+  saveState();
+}
+
+/* render large avatar */
+function renderLargeAvatar(){
+  largeAvatar.innerHTML = state.avatar ? AVATARS[state.avatar] : "<div style='color:var(--muted)'>Pick an avatar →</div>";
+}
+
+/* set initial thought when user selects avatar */
+function setStarterThought(){
+  if(!state.avatar) return;
+  thought.textContent = "What topic will you teach me today? Explain it as if you were teaching a junior student.";
+}
+
+/* append message to UI */
+function appendMessage(role, text, options = {}) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg-row';
+  const m = document.createElement('div');
+  m.className = role === 'user' ? 'msg you' : 'msg bot';
+  // if image included in options
+  if(options.imageData){
+    const img = document.createElement('img');
+    img.src = options.imageData;
+    img.alt = 'Uploaded image';
+    m.appendChild(img);
+    if(text) { const p = document.createElement('div'); p.textContent = text; p.style.marginTop='8px'; m.appendChild(p); }
+  } else {
+    m.textContent = text;
+  }
+  wrapper.appendChild(m);
+  messagesEl.appendChild(wrapper);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+/* ---------- initialize UI from localStorage ---------- */
+(function init() {
+  // restore choices if present
+  if(state.avatar) setSelectedAvatar(state.avatar);
+  if(state.bg) setSelectedBg(state.bg);
+  renderLargeAvatar();
+  meterEl.textContent = state.meter;
+  // if no avatar: show placeholder thought
+  if(!state.avatar) thought.textContent = "Choose an avatar to begin — I’ll ask the first question!";
+})();
+
+/* ---------- avatar event listeners ---------- */
+avatarMale.addEventListener('click', ()=> setSelectedAvatar('male'));
+avatarFemale.addEventListener('click', ()=> setSelectedAvatar('female'));
+avatarMale.addEventListener('keydown', (e)=> { if(e.key==='Enter') setSelectedAvatar('male'); });
+avatarFemale.addEventListener('keydown', (e)=> { if(e.key==='Enter') setSelectedAvatar('female'); });
+
+bgLibrary.addEventListener('click', ()=> setSelectedBg('library'));
+bgCoffee.addEventListener('click', ()=> setSelectedBg('coffee'));
+bgGarden.addEventListener('click', ()=> setSelectedBg('garden'));
+
+resetBtn.addEventListener('click', ()=>{
+  state.avatar = null;
+  state.bg = null;
+  localStorage.removeItem('menti_avatar');
+  localStorage.removeItem('menti_bg');
+  avatars.forEach(a=>a.classList.remove('selected'));
+  bgThumbs.forEach(b=>b.classList.remove('selected'));
+  chatBg.style.backgroundImage = '';
+  renderLargeAvatar();
+  thought.textContent = "Choose an avatar to begin — I’ll ask the first question!";
+});
+
+/* ---------- image upload ---------- */
+imageBtn.addEventListener('click', ()=> imageInput.click());
+imageInput.addEventListener('change', async (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  // display preview and create base64
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    appendMessage('user', 'Uploaded an image:', { imageData: dataUrl });
+    sendMessageToServer({text: `[image uploaded]\n${file.name}\n\nDataURI:\n${dataUrl}`});
+  };
+  reader.readAsDataURL(file);
+  imageInput.value = '';
+});
+
+/* ---------- audio recording (simple) ---------- */
+let mediaRecorder = null;
+let audioChunks = [];
+let recording = false;
+
+micBtn.addEventListener('click', async ()=>{
+  if(recording){
+    // stop
+    mediaRecorder.stop();
+    micBtn.classList.remove('recording');
+    micText.textContent = 'Record';
+    recording = false;
+    return;
+  }
+
+  // start recording
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.addEventListener('dataavailable', event => {
+      if (event.data.size > 0) audioChunks.push(event.data);
+    });
+    mediaRecorder.addEventListener('stop', async () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      // convert to dataURL
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        appendMessage('user', 'Sent a voice note', {});
+        sendMessageToServer({ text: `[audio message]\nDuration: approx\nDataURI:\n${dataUrl}` });
+      };
+      reader.readAsDataURL(blob);
+      // stop all tracks
+      stream.getTracks().forEach(t => t.stop());
+    });
+    mediaRecorder.start();
+    recording = true;
+    micBtn.classList.add('recording');
+    micText.textContent = 'Recording... (tap to stop)';
+  }catch(err){
+    alert('Microphone access denied or not available.');
+  }
+});
+
+/* ---------- send typed message (or combined) ---------- */
+sendBtn.addEventListener('click', async ()=>{
+  const content = textInput.value.trim();
+  if(!content){
+    // if no text, show small nudge
+    textInput.focus();
+    return;
+  }
+  appendMessage('user', content);
+  // push to messages
+  state.messages.push({ role:'user', content });
+  textInput.value = '';
+  meterEl.textContent = ++state.meter;
+
+  // send to server
+  await sendMessageToServer({ text: content });
+});
+
+/* ---------- core send to server ---------- */
+async function sendMessageToServer({ text }){
+  // ensure there's a system message at start (already in state.messages)
+  // add the user's latest message as well (server version uses messages array)
+  // we'll send a copy to avoid mutating state.messages twice
+  const messagesToSend = [...state.messages];
+  // messagesToSend already includes earlier user messages; add latest
+  messagesToSend.push({ role:'user', content: text });
+
+  // show a temporary assistant "thinking" bubble
+  const thinking = document.createElement('div');
+  thinking.className = 'msg bot';
+  thinking.innerHTML = '<span class="spinner" aria-hidden="true"></span> Thinking...';
+  const row = document.createElement('div'); row.className='msg-row'; row.appendChild(thinking);
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: messagesToSend, plan: 'free', meter: state.meter })
+    });
+    const json = await res.json();
+    // remove thinking
+    thinking.parentElement.remove();
+
+    if(json.error){
+      appendMessage('bot', 'Server error: ' + (json.message || json.error));
+      return;
+    }
+    const reply = json.content || '(no reply)';
+    // push assistant reply into state.messages
+    state.messages.push({ role:'assistant', content: reply });
+    appendMessage('bot', reply);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  } catch(err){
+    thinking.parentElement.remove();
+    appendMessage('bot', 'Network error — please try again.');
+  }
+}
+
+/* ---------- keyboard shortcuts (enter to send) ---------- */
+textInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendBtn.click();
+  }
+});
+
+/* ---------- small UX: clicking avatar when already selected opens thought ---------- */
+avatars.forEach(a => a.addEventListener('dblclick', () => setStarterThought()));
+
+/* ---------- accessibility quick focus */ 
+avatarMale.setAttribute('aria-label','Male doctor avatar');
+avatarFemale.setAttribute('aria-label','Female doctor avatar');
+
+/* ---------- initial UI prompt if avatar already chosen: simulate the AI asking first question ---------- */
+if(state.avatar){
+  setTimeout(()=> {
+    // small delay to feel natural
+    setStarterThought();
+    // optionally, push an initial assistant prompt into messages and UI
+    const welcome = `Hi — I’m your study buddy. Tell me what topic you’ll teach me and explain it in your own words.`;
+    appendMessage('bot', welcome);
+    state.messages.push({ role:'assistant', content: welcome });
+  }, 500);
+}
+</script>
+</body>
+</html>
