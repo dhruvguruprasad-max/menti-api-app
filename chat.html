@@ -531,7 +531,154 @@ window._menti = { state, saveChoices, showUpgradeModal };
 /* ---------- initial render ---------- */
 renderChatScene();
 updateUsageMeter();
+<script>
+/* ---------- Quick Fix: Reliable avatar/background selection ---------- */
+/* Drop this at the end of your chat.html (before </body>) */
 
+document.addEventListener('DOMContentLoaded', () => {
+  // Get references
+  const chooseMale = document.getElementById('chooseMale');
+  const chooseFemale = document.getElementById('chooseFemale');
+  const bgLibrary = document.getElementById('bgLibrary');
+  const bgCoffee = document.getElementById('bgCoffee');
+  const bgGarden = document.getElementById('bgGarden');
+  const nextToBg = document.getElementById('nextToBg');
+  const toChat = document.getElementById('toChat');
+  const backToAvatar = document.getElementById('backToAvatar');
+  const avatarLargeArea = document.getElementById('avatarLarge') || null;
+  const chatBg = document.getElementById('chatBg') || null;
+
+  // Defensive checks
+  if(!chooseMale || !chooseFemale || !bgLibrary || !bgCoffee || !bgGarden) {
+    console.warn('Selection elements not found — make sure IDs match chooseMale/chooseFemale/bgLibrary/bgCoffee/bgGarden');
+    return;
+  }
+
+  // State (mirrors earlier state usage)
+  const state = {
+    avatar: localStorage.getItem('menti_avatar') || null,
+    bg: localStorage.getItem('menti_bg') || null
+  };
+
+  // Helper UI functions
+  function setAvatarUI(){
+    chooseMale.classList.toggle('selected', state.avatar === 'male');
+    chooseFemale.classList.toggle('selected', state.avatar === 'female');
+    // show big avatar preview if present
+    if(avatarLargeArea){
+      if(state.avatar === 'male') avatarLargeArea.innerHTML = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" rx="20" fill="#e7fffb"/><g transform="translate(30,26)"><circle cx="70" cy="40" r="32" fill="#ffe0c7"/><path d="M48 30 C60 18, 86 18, 98 30" fill="#3b2f2f"/><circle cx="60" cy="40" r="4" fill="#2b2b2b"/><circle cx="80" cy="40" r="4" fill="#2b2b2b"/><path d="M60 52 Q70 62 82 52" stroke="#7a4b2b" stroke-width="2" fill="transparent"/><rect x="30" y="88" width="96" height="30" rx="8" fill="#e6f6f0"/></g></svg>` ;
+      else if(state.avatar === 'female') avatarLargeArea.innerHTML = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" rx="20" fill="#fff6fb"/><g transform="translate(30,26)"><circle cx="70" cy="40" r="32" fill="#ffe6d1"/><path d="M52 30 C62 18, 86 18, 96 30" fill="#3b2f2f"/><circle cx="60" cy="40" r="4" fill="#2b2b2b"/><circle cx="80" cy="40" r="4" fill="#2b2b2b"/><path d="M60 54 Q70 62 82 54" stroke="#7a4b2b" stroke-width="2" fill="transparent"/><rect x="30" y="88" width="96" height="30" rx="8" fill="#fff7e6"/></g></svg>`;
+      else avatarLargeArea.innerHTML = '';
+    }
+  }
+
+  function setBgUI(){
+    bgLibrary.classList.toggle('selected', state.bg === 'library');
+    bgCoffee.classList.toggle('selected', state.bg === 'coffee');
+    bgGarden.classList.toggle('selected', state.bg === 'garden');
+    if(chatBg){
+      if(state.bg){
+        // Reuse your inline svg background map if present on page; else keep as dim overlay
+        const BG_MAP = {
+          library: `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500"><rect width="100%" height="100%" fill="#f6fbff"/><g transform="translate(40,40)"><rect width="720" height="420" rx="18" fill="#fff"/></g></svg>')}`,
+          coffee:  `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500"><rect width="100%" height="100%" fill="#fff8f6"/></svg>')}`,
+          garden:  `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500"><rect width="100%" height="100%" fill="#f6fff8"/></svg>')}`
+        };
+        chatBg.style.backgroundImage = `url("${BG_MAP[state.bg] || ''}")`;
+        chatBg.style.backgroundSize = 'cover';
+      } else {
+        chatBg.style.backgroundImage = '';
+      }
+    }
+  }
+
+  // Save helper
+  function saveChoices(){
+    localStorage.setItem('menti_avatar', state.avatar || '');
+    localStorage.setItem('menti_bg', state.bg || '');
+  }
+
+  // Attach click + keyboard handlers (robust)
+  function wireElement(el, cb){
+    el.addEventListener('click', cb);
+    el.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cb(); }});
+    // ensure focusable
+    if(!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    // make sure pointer events are enabled
+    el.style.pointerEvents = 'auto';
+  }
+
+  wireElement(chooseMale, () => {
+    state.avatar = 'male';
+    setAvatarUI();
+    saveChoices();
+  });
+  wireElement(chooseFemale, () => {
+    state.avatar = 'female';
+    setAvatarUI();
+    saveChoices();
+  });
+
+  wireElement(bgLibrary, () => {
+    state.bg = 'library';
+    setBgUI();
+    saveChoices();
+  });
+  wireElement(bgCoffee, () => {
+    state.bg = 'coffee';
+    setBgUI();
+    saveChoices();
+  });
+  wireElement(bgGarden, () => {
+    state.bg = 'garden';
+    setBgUI();
+    saveChoices();
+  });
+
+  // Next/back navigation (defensive)
+  if(nextToBg){
+    wireElement(nextToBg, () => {
+      // require avatar if you want mandatory selection
+      if(!state.avatar){
+        alert('Please choose an avatar or press "Not now" to continue without one.');
+        return;
+      }
+      // show background step: rely on your existing class toggles
+      document.getElementById('stepAvatar').classList.add('hidden');
+      document.getElementById('stepBg').classList.remove('hidden');
+    });
+  }
+  if(toChat){
+    wireElement(toChat, () => {
+      // require bg or confirm
+      if(!state.bg){
+        if(!confirm('No background chosen. Continue?')) return;
+      }
+      // render the chat scene UI updates
+      setAvatarUI(); setBgUI();
+      document.getElementById('stepBg').classList.add('hidden');
+      document.getElementById('stepChat').classList.remove('hidden');
+    });
+  }
+  if(backToAvatar){
+    wireElement(backToAvatar, () => {
+      document.getElementById('stepBg').classList.add('hidden');
+      document.getElementById('stepAvatar').classList.remove('hidden');
+    });
+  }
+
+  // Initialize visuals from saved state
+  setAvatarUI();
+  setBgUI();
+
+  // Extra: if the avatar/background area was covered by another element (z-index), ensure clickable
+  // by raising z-index for selectable elements
+  [chooseMale, chooseFemale, bgLibrary, bgCoffee, bgGarden].forEach(el => {
+    el.style.zIndex = 50;
+  });
+
+  console.log('Menti selection helper initialized — avatar:', state.avatar, 'bg:', state.bg);
+});
 </script>
 </body>
 </html>
