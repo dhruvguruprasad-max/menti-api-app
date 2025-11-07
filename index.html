@@ -1,1 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Menti — AI Med Study App</title>
+<meta name="description" content="Teach an AI med student, get smart questions, flashcards, recall, Cornell notes and clinical cases. Free, Plus, and Pro plans."/>
+<style>
+  :root{
+    --mint:#0FD3A0; --lav:#B68CFF; --ink:#0f1115; --paper:#fff; --bg1:#e9fff7; --bg2:#f3edff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Poppins,Arial;
+    color:var(--ink); background:linear-gradient(145deg,var(--bg1),var(--bg2)) fixed;
+    overflow-x:hidden;
+  }
 
+  /* ---------- Floating study background ---------- */
+  .floaters svg{
+    position:absolute; width:64px; height:64px; opacity:.15; pointer-events:none;
+    animation: drift 16s ease-in-out infinite;
+  }
+  .f1{left:6vw; top:10vh; animation-delay:0s}
+  .f2{left:78vw; top:18vh; animation-delay:2s}
+  .f3{left:15vw; top:65vh; animation-delay:1s}
+  .f4{left:85vw; top:70vh; animation-delay:3s}
+  @keyframes drift{
+    0%{transform:translateY(0) rotate(0deg)}
+    50%{transform:translateY(-22px) rotate(8deg)}
+    100%{transform:translateY(0) rotate(0deg)}
+  }
+
+  /* ---------- Header / Hero ---------- */
+  .wrap{max-width:1060px; margin:0 auto; padding:28px}
+  header{display:flex; align-items:center; gap:12px; margin-bottom:18px}
+  header img{width:48px;height:48px;border-radius:14px;object-fit:cover}
+  .brand-title{font-weight:800; letter-spacing:.3px}
+  .brand-sub{opacity:.7; font-size:13px}
+
+  .hero{
+    position:relative; z-index:2;
+    background:var(--paper); border-radius:22px; padding:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.08); text-align:center;
+  }
+  h1{margin:6px 0 8px; font-size:clamp(28px,5vw,42px)}
+  .lead{opacity:.85; margin:0 0 16px}
+  .cta{
+    display:inline-block; margin:8px; padding:14px 20px; border-radius:14px; text-decoration:none;
+    font-weight:800; transition:transform .15s ease, filter .15s ease; position:relative; overflow:hidden;
+  }
+  .cta.primary{color:#fff; background:linear-gradient(130deg,var(--mint),var(--lav))}
+  .cta.dark{color:#fff; background:#0f1115}
+  .cta:active{transform:scale(.98)}
+  .cta::after{
+    content:""; position:absolute; left:50%; top:50%; width:0; height:0; border-radius:50%;
+    background:rgba(255,255,255,.35); transform:translate(-50%,-50%); transition:width .45s ease,height .45s ease,opacity .6s ease;
+    opacity:0;
+  }
+  .cta.ripple::after{width:280px; height:280px; opacity:0}
+
+  /* ---------- Envelope Plans ---------- */
+  .envelope-area{margin:18px 0}
+  .envelope{
+    position:relative; width:min(820px,92vw); margin:0 auto; cursor:pointer;
+    filter:drop-shadow(0 14px 40px rgba(0,0,0,.12));
+  }
+  .env-body{
+    background:#fefefe; border:1px solid #ececec; border-radius:14px; height:220px;
+  }
+  .env-flap{
+    position:absolute; left:0; right:0; top:0; height:0; padding-top:30%;
+    background:linear-gradient(180deg,#ffffff,#f4f4ff); border:1px solid #ececec; border-bottom:none;
+    clip-path:polygon(0 0, 100% 0, 50% 100%); transform-origin:top center;
+    border-top-left-radius:14px; border-top-right-radius:14px; transition:transform .7s cubic-bezier(.2,.8,.2,1);
+    box-shadow:inset 0 -8px 20px rgba(0,0,0,.06);
+  }
+  .letter{
+    position:absolute; left:3%; right:3%; top:20px; height:auto;
+    background:#ffffff; border-radius:12px; border:1px solid #eaeaea;
+    transform:translateY(110px); transition:transform .7s cubic-bezier(.2,.8,.2,1), opacity .5s;
+    padding:12px;
+  }
+  .envelope.open .env-flap{ transform:rotateX(180deg) }
+  .envelope.open .letter{ transform:translateY(-12px) }
+
+  .plans{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+  .plan-card{
+    background:#fff; border:1px solid #eee; border-radius:14px; padding:14px; text-align:left;
+  }
+  .plan-card h3{margin:6px 0 6px}
+  .price{font-weight:900; margin:8px 0}
+  .small{opacity:.75; font-size:13px}
+  ul{margin:8px 0 0 18px}
+
+  footer{opacity:.6;text-align:center;margin:18px 0 6px; font-size:12px}
+  @media (max-width:720px){
+    .env-body{height:200px}
+  }
+
+  /* ---------- Surprise discount widget ---------- */
+  .surprise-btn{
+    position:fixed; right:16px; bottom:18px; z-index:20;
+    display:flex; align-items:center; gap:8px;
+    background:#0f1115; color:#fff; border:none; border-radius:16px;
+    padding:10px 14px; font-weight:800; cursor:pointer;
+    box-shadow:0 12px 28px rgba(0,0,0,.18);
+    transition:transform .15s ease, filter .2s ease;
+  }
+  .surprise-btn:hover{ transform:translateY(-2px) }
+  .surprise-btn svg{ width:20px; height:20px }
+  .surprise-card{
+    position:fixed; right:16px; bottom:74px; z-index:21;
+    width:280px; background:#ffffff; border:1px solid #eee; border-radius:14px;
+    box-shadow:0 18px 40px rgba(0,0,0,.16); padding:14px; display:none;
+  }
+  .surprise-card.show{ display:block; animation:pop .18s ease }
+  @keyframes pop{ from{transform:translateY(6px); opacity:.5} to{transform:translateY(0); opacity:1} }
+  .code-box{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:#f7f8ff; border:1px dashed #cbd0ff; border-radius:10px; padding:8px 10px; font-weight:800;
+  }
+  .apply-btn{
+    display:inline-block; margin-top:10px; width:100%; text-align:center; padding:10px 12px; border-radius:10px;
+    background:linear-gradient(130deg,var(--mint),var(--lav)); color:#fff; text-decoration:none; font-weight:800;
+  }
+  .mini{font-size:12px; opacity:.75; margin-top:6px}
+</style>
+</head>
+<body>
+
+<!-- Floating study background icons -->
+<div class="floaters" aria-hidden="true">
+  <!-- DNA -->
+  <svg class="f1" viewBox="0 0 64 64" fill="none"><path d="M18 10c10 8 18 8 28 0M18 54c10-8 18-8 28 0M18 10c0 18 0 26 0 44M46 10c0 18 0 26 0 44" stroke="#0FD3A0" stroke-width="3" stroke-linecap="round"/><path d="M19 22h26M19 42h26" stroke="#B68CFF" stroke-width="3" stroke-linecap="round"/></svg>
+  <!-- Stethoscope -->
+  <svg class="f2" viewBox="0 0 64 64" fill="none"><path d="M18 10v12a10 10 0 0 0 20 0V10" stroke="#0FD3A0" stroke-width="3" stroke-linecap="round"/><circle cx="48" cy="36" r="6" stroke="#B68CFF" stroke-width="3"/><path d="M38 22v14a10 10 0 0 0 10 10h4" stroke="#0FD3A0" stroke-width="3" stroke-linecap="round"/></svg>
+  <!-- Book -->
+  <svg class="f3" viewBox="0 0 64 64" fill="none"><path d="M10 14h24a6 6 0 0 1 6 6v30H16a6 6 0 0 1-6-6V14z" stroke="#0FD3A0" stroke-width="3"/><path d="M34 14h20v36H40" stroke="#B68CFF" stroke-width="3"/></svg>
+  <!-- Flask -->
+  <svg class="f4" viewBox="0 0 64 64" fill="none"><path d="M26 10v10l-8 16a10 10 0 0 0 9 14h10a10 10 0 0 0 9-14l-8-16V10" stroke="#0FD3A0" stroke-width="3"/><path d="M22 36h20" stroke="#B68CFF" stroke-width="3"/></svg>
+</div>
+
+<div class="wrap">
+  <header>
+    <img src="assets/logo.jpg" alt="Menti logo"/>
+    <div>
+      <div class="brand-title">Menti</div>
+      <div class="brand-sub">Teach it. Master it.</div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Your AI med student</h1>
+    <p class="lead">Explain any topic. Menti listens, asks smart questions, builds memory — and cheers you on to become a caring doctor.</p>
+
+    <!-- Buttons with ripple animation -->
+    <a class="cta primary" id="startBtn" href="chat.html">🚀 Start for Free</a>
+    <a class="cta dark" id="proBtn" href="https://dhruvprasad.gumroad.com/l/lghflw" target="_blank" rel="noopener">🔓 Upgrade to Pro</a>
+
+    <!-- Envelope reveal -->
+    <div class="envelope-area">
+      <div class="envelope" id="envelope" aria-label="Open to view plans" title="Tap to open">
+        <div class="env-flap"></div>
+        <div class="env-body"></div>
+        <div class="letter">
+          <div class="plans">
+            <div class="plan-card">
+              <h3>Free 🩵</h3>
+              <div class="price">₹0</div>
+              <ul>
+                <li>Teach-by-explaining chat</li>
+                <li>Smart questions + quick summary</li>
+                <li><b>Limit:</b> 15 messages/day</li>
+              </ul>
+            </div>
+            <div class="plan-card">
+              <h3>Plus 💫</h3>
+              <div class="price">₹199 / month</div>
+              <ul>
+                <li>Everything in Free</li>
+                <li>Flashcards + Recall review</li>
+                <li><b>Limit:</b> 60 messages/day</li>
+              </ul>
+            </div>
+            <div class="plan-card">
+              <h3>Pro 🔥</h3>
+              <div class="price">₹499 / month</div>
+              <ul>
+                <li>Unlimited messages</li>
+                <li>Cornell notes + Export</li>
+                <li>Clinical case mode</li>
+              </ul>
+            </div>
+          </div>
+          <p class="small" style="margin-top:10px; text-align:center">Tap the envelope to open/close plans.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>© <span id="y"></span> Menti • Educational use only</footer>
+</div>
+
+<!-- Surprise discount widget -->
+<button class="surprise-btn" id="surpriseBtn" aria-controls="surpriseCard" aria-expanded="false" title="Surprise here!">
+  <!-- little stethoscope icon -->
+  <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+    <path d="M18 10v12a10 10 0 0 0 20 0V10" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="48" cy="36" r="6" stroke="#fff" stroke-width="3"/>
+    <path d="M38 22v14a10 10 0 0 0 10 10h4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+  Surprise
+</button>
+
+<div class="surprise-card" id="surpriseCard" role="dialog" aria-label="Discount code">
+  <div style="font-weight:800; margin-bottom:6px;">🎁 10% off for you!</div>
+  <div class="code-box">
+    <span id="codeText">MENTI10</span>
+    <button id="copyBtn" style="border:none;background:#0f1115;color:#fff;border-radius:8px;padding:6px 8px;cursor:pointer">Copy</button>
+  </div>
+  <a class="apply-btn" id="applyBtn" href="https://dhruvprasad.gumroad.com/l/lghflw?offer_code=MENTI10" target="_blank" rel="noopener">Apply & Upgrade</a>
+  <div class="mini">Code auto-applies on checkout.</div>
+</div>
+
+<script>
+  // Year
+  document.getElementById('y').textContent = new Date().getFullYear();
+
+  // Envelope open/close
+  const env = document.getElementById('envelope');
+  let opened = false;
+  function toggleEnv(){ opened = !opened; env.classList.toggle('open', opened); }
+  env.addEventListener('click', toggleEnv);
+  setTimeout(()=>{ toggleEnv(); }, 600);
+
+  // Button ripple (visual)
+  function ripple(e){
+    e.currentTarget.classList.remove('ripple');
+    void e.currentTarget.offsetWidth; // reflow
+    e.currentTarget.classList.add('ripple');
+  }
+  document.getElementById('startBtn').addEventListener('click', ripple);
+  document.getElementById('proBtn').addEventListener('click', ripple);
+
+  // Surprise widget logic
+  const sBtn = document.getElementById('surpriseBtn');
+  const sCard = document.getElementById('surpriseCard');
+  const copyBtn = document.getElementById('copyBtn');
+  const codeText = document.getElementById('codeText');
+
+  sBtn.addEventListener('click', () => {
+    const show = !sCard.classList.contains('show');
+    sCard.classList.toggle('show', show);
+    sBtn.setAttribute('aria-expanded', show ? 'true' : 'false');
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(codeText.textContent.trim());
+      copyBtn.textContent = 'Copied!';
+      setTimeout(()=> copyBtn.textContent = 'Copy', 1200);
+    } catch {
+      copyBtn.textContent = 'Select & copy';
+    }
+  });
+
+  // Close the surprise card when clicking outside
+  document.addEventListener('click', (e) => {
+    const within = sCard.contains(e.target) || sBtn.contains(e.target);
+    if (!within) sCard.classList.remove('show');
+  }, true);
+</script>
+</body>
+</html>
