@@ -6,7 +6,9 @@
 <title>Menti — AI Med Study Buddy</title>
 <meta name="description" content="Teach Menti what you learned. It quizzes, summarizes, and helps you remember. Plans: Starter, Booster, Mastery."/>
 <style>
-  :root{--mint:#0FD3A0;--lav:#B68CFF;--ink:#0f1115;--paper:#fff;--bg1:#e9fff7;--bg2:#f3edff}
+  :root{
+    --mint:#0FD3A0; --lav:#B68CFF; --ink:#0f1115; --paper:#fff; --bg1:#e9fff7; --bg2:#f3edff;
+  }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
@@ -17,7 +19,7 @@
 
   /* Floating background study icons */
   .floaters svg{
-    position:absolute; width:64px; height:64px; opacity:.15; pointer-events:none;
+    position:absolute; width:64px; height:64px; opacity:.12; pointer-events:none;
     animation: drift 16s ease-in-out infinite;
   }
   .f1{left:6vw; top:10vh}
@@ -45,7 +47,7 @@
     box-shadow:0 20px 60px rgba(0,0,0,.08); text-align:center;
   }
   h1{margin:6px 0 8px; font-size:clamp(26px,5vw,40px)}
-  .lead{opacity:.85; margin:0 0 16px}
+  .lead{opacity:.85; margin:0 0 16px; max-width:780px; margin-left:auto; margin-right:auto}
 
   .cta{
     display:inline-block; margin:8px; padding:14px 20px; border-radius:14px; text-decoration:none;
@@ -102,6 +104,8 @@
 
   @media (max-width:640px){
     .nav{display:none}
+    .lead{padding:0 8px}
+    .hint-pill{padding:12px}
   }
 </style>
 </head>
@@ -134,12 +138,13 @@
     </nav>
   </header>
 
-  <section class="hero">
-    <h1>Your AI med study buddy</h1>
+  <section class="hero" role="region" aria-labelledby="hero-heading">
+    <h1 id="hero-heading">Your AI med study buddy</h1>
     <p class="lead">Teach Menti what you learned. It listens, asks smart questions, summarizes, and helps you remember.</p>
 
     <a class="cta primary" href="chat.html">🚀 Start for Free</a>
-    <a class="cta dark" href="https://dhruvprasad.gumroad.com/l/lghflw" target="_blank" rel="noopener">🔓 Upgrade to Pro</a>
+    <!-- changed: goes to plans page (not Gumroad) -->
+    <a class="cta dark" href="plans.html">🔓 Go Pro</a>
 
     <div style="margin-top:14px;">
       <a class="hint-pill" href="plans.html" title="See all plans">
@@ -155,7 +160,7 @@
 </div>
 
 <!-- Countdown timer -->
-<div class="timer" id="timer">
+<div class="timer" id="timer" role="status" aria-live="polite">
   <span>⏳ Sale ends in <span id="countdown">--:--:--</span></span>
   <small>(Prices may increase)</small>
 </div>
@@ -203,7 +208,7 @@
     tick(); setInterval(tick, 1000);
   })();
 
-  // Load confetti script on first use
+  // Load confetti script lazily on first use
   let confettiLoaded = false;
   function ensureConfetti(cb){
     if (confettiLoaded) return cb && cb();
@@ -215,6 +220,7 @@
 
   // Confetti burst
   function launchConfetti(){
+    if (!confettiLoaded) return;
     const duration = 2000;
     const end = Date.now() + duration;
     const colors = ['#0FD3A0','#B68CFF','#ffffff','#89f0c5'];
