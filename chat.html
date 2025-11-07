@@ -3,428 +3,302 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Menti — Teach & Quiz</title>
-<meta name="description" content="Pick a doctor avatar, choose a cute background, then teach Menti."/>
+<title>Menti — Chat</title>
 <style>
-  :root{
-    --mint:#0FD3A0; --lav:#B68CFF; --ink:#0f1115; --muted:#6b7280; --card:#ffffff;
-    --glass: rgba(255,255,255,0.68);
+  :root {
+    --mint:#0FD3A0;
+    --lav:#B68CFF;
+    --ink:#0f1115;
+    --muted:#6b7280;
+    --card:#ffffff;
+    --bg:linear-gradient(180deg,#f0fffb,#f8f5ff);
   }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#f0fffb,#f8f5ff);color:var(--ink)}
-  .container{max-width:1100px;margin:20px auto;padding:18px}
 
-  /* panels & transitions */
-  .panel { background:var(--card); border-radius:14px; padding:18px; box-shadow:0 14px 36px rgba(2,6,23,.06); margin-bottom:18px; transition: transform .36s cubic-bezier(.2,.9,.2,1), opacity .28s ease; }
-  .hidden { opacity:0; transform: translateY(14px) scale(.995); pointer-events:none; height:0; overflow:hidden; }
+  * { box-sizing:border-box; }
+  html,body {
+    height:100%;
+    margin:0;
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    background:var(--bg);
+    color:var(--ink);
+  }
 
-  .center { text-align:center }
-  .title{ font-weight:800; font-size:20px; margin:0 0 6px; }
-  .subtitle{ color:var(--muted); font-size:14px; margin:0 0 12px }
+  .container {
+    max-width:1000px;
+    margin:20px auto;
+    padding:18px;
+  }
 
-  /* avatars */
-  .avatar-grid{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap }
-  .avatar-card{ width:180px; border-radius:12px; background:linear-gradient(180deg,#fff,#fbfbff); padding:10px; cursor:pointer; border:2px solid transparent; transition:transform .12s,border-color .12s,box-shadow .12s; display:flex; flex-direction:column; align-items:center; gap:8px }
-  .avatar-card:hover{ transform:translateY(-6px) }
-  .avatar-card.selected{ border-color:rgba(15,17,21,.08); box-shadow:0 18px 46px rgba(2,6,23,.06) }
-  .avatar-card svg{ width:110px; height:110px; display:block }
+  .chat-stage {
+    position:relative;
+    border-radius:14px;
+    background:var(--card);
+    box-shadow:0 14px 36px rgba(2,6,23,.06);
+    padding:20px;
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:20px;
+  }
 
-  /* backgrounds */
-  .bg-grid{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:12px }
-  .bg-thumb{ width:220px; height:130px; border-radius:12px; overflow:hidden; cursor:pointer; border:2px solid transparent; box-shadow:0 10px 30px rgba(2,6,23,.04); background-size:cover; background-position:center }
-  .bg-thumb.selected{ border-color:rgba(15,17,21,.08); transform:translateY(-6px) }
+  @media (max-width:800px){
+    .chat-stage {
+      grid-template-columns:1fr;
+    }
+  }
 
-  .controls{ display:flex; justify-content:center; gap:12px; margin-top:12px }
-  .btn{ padding:10px 14px; border-radius:10px; font-weight:800; cursor:pointer; border:0 }
-  .btn.primary{ background:linear-gradient(130deg,var(--mint),var(--lav)); color:#fff }
-  .btn.ghost{ background:transparent; border:1px solid #ddd }
+  .avatar-large {
+    width:200px;
+    height:200px;
+    border-radius:16px;
+    background:#e7fffb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 10px 30px rgba(2,6,23,.06);
+    margin:auto;
+  }
 
-  /* chat */
-  .chat-stage{ position:relative; min-height:520px; overflow:hidden; border-radius:14px }
-  .chat-bg{ position:absolute; inset:0; background-size:cover; background-position:center; opacity:0.10; z-index:0; filter:blur(0.6px) }
-  .chat-ui{ position:relative; z-index:1; display:grid; grid-template-columns:240px 1fr; gap:16px; align-items:start; padding:18px }
-  @media (max-width:900px){ .chat-ui{ grid-template-columns:1fr } .avatar-large{ margin:0 auto } }
+  .title { font-size:22px; font-weight:800; margin:0; }
+  .subtitle { color:var(--muted); font-size:14px; margin:6px 0 12px; }
 
-  .avatar-large{ width:220px; height:220px; border-radius:16px; background:var(--glass); display:flex; align-items:center; justify-content:center; box-shadow:0 14px 36px rgba(2,6,23,.06) }
-  .thought{ background:var(--card); border-radius:14px; padding:12px 14px; box-shadow:0 12px 30px rgba(2,6,23,.06); font-weight:700; max-width:100% }
+  .messages {
+    background:rgba(255,255,255,0.9);
+    border-radius:12px;
+    padding:12px;
+    max-height:400px;
+    overflow:auto;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
 
-  .messages{ background:rgba(255,255,255,0.92); border-radius:12px; padding:12px; max-height:360px; overflow:auto; display:flex; flex-direction:column; gap:10px }
-  .msg{ padding:10px 12px; border-radius:12px; display:inline-block; max-width:78%; box-shadow:0 8px 20px rgba(2,6,23,.03) }
-  .msg.bot{ background:#fff; align-self:flex-start }
-  .msg.you{ background:linear-gradient(180deg,#e6fff6,#d6fff0); align-self:flex-end; font-weight:700 }
+  .msg {
+    padding:10px 12px;
+    border-radius:12px;
+    display:inline-block;
+    max-width:78%;
+    box-shadow:0 8px 20px rgba(2,6,23,.03);
+  }
 
-  .composer{ display:flex; gap:10px; align-items:flex-end; margin-top:12px }
-  textarea{ flex:1; min-height:76px; border-radius:12px; border:1px solid #e6e8ef; padding:10px 12px; resize:vertical; font-family:inherit }
-  .send{ background:linear-gradient(130deg,var(--mint),var(--lav)); color:#fff; border:0; padding:10px 12px; border-radius:10px; font-weight:800 }
+  .msg.bot {
+    background:#fff;
+    align-self:flex-start;
+  }
 
-  .small{ color:var(--muted); font-size:13px }
+  .msg.you {
+    background:linear-gradient(180deg,#e6fff6,#d6fff0);
+    align-self:flex-end;
+    font-weight:700;
+  }
 
-  /* thumbnails */
-  .thumbLabel{ margin-top:6px; font-weight:700 }
+  .composer {
+    display:flex;
+    gap:10px;
+    align-items:flex-end;
+    margin-top:12px;
+  }
+
+  textarea {
+    flex:1;
+    min-height:76px;
+    border-radius:12px;
+    border:1px solid #e6e8ef;
+    padding:10px 12px;
+    resize:vertical;
+    font-family:inherit;
+  }
+
+  .btn {
+    border:0;
+    cursor:pointer;
+    border-radius:10px;
+    font-weight:800;
+  }
+
+  .send {
+    background:linear-gradient(130deg,var(--mint),var(--lav));
+    color:#fff;
+    padding:10px 14px;
+  }
+
+  .mic, .upload {
+    background:#fff;
+    border:1px solid #ddd;
+    padding:10px 12px;
+  }
+
+  .small {
+    color:var(--muted);
+    font-size:13px;
+  }
 </style>
 </head>
 <body>
-  <div class="container">
+<div class="container">
+  <div class="title">Teach Menti 🩺</div>
+  <p class="subtitle">Explain a topic as if you're teaching a junior student. Menti will ask follow-ups and encourage you.</p>
 
-    <!-- STEP 1: Avatar -->
-    <section id="panelAvatar" class="panel" aria-labelledby="avatarTitle">
-      <h2 id="avatarTitle" class="title center">Choose your student</h2>
-      <p class="subtitle center">Pick a doctor avatar to teach — names are saved.</p>
+  <div class="chat-stage">
+    <div style="text-align:center">
+      <div class="avatar-large">
+        <!-- Friendly Doctor Avatar -->
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="6" width="108" height="108" rx="18" fill="#e7fffb"/>
+          <g transform="translate(16,12)">
+            <circle cx="44" cy="34" r="26" fill="#ffe7cf"/>
+            <path d="M28 26 C36 16, 58 16, 66 26" fill="#4b3a3a"/>
+            <circle cx="36" cy="36" r="3" fill="#2b2b2b"/>
+            <circle cx="52" cy="36" r="3" fill="#2b2b2b"/>
+            <path d="M36 46 Q44 52 52 46" stroke="#7a4b2b" stroke-width="2" fill="transparent"/>
+            <!-- Coat -->
+            <rect x="16" y="64" width="56" height="26" rx="6" fill="#e6f6f0"/>
+            <!-- Stethoscope -->
+            <path d="M80 78 C76 70, 64 68, 56 68" stroke="#2b2b2b" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle cx="84" cy="76" r="4" fill="#2b2b2b"/>
+          </g>
+        </svg>
+      </div>
+      <div style="margin-top:8px;font-weight:700;">Dr. Menti</div>
+    </div>
 
-      <div class="avatar-grid" role="list" aria-label="Avatar choices">
-        <!-- Avatar 1: Aarav -->
-        <div class="avatar-card" id="avatarAarav" role="button" tabindex="0" aria-pressed="false" aria-label="Choose Aarav">
-          <!-- doctor avatar with stethoscope -->
-          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect x="6" y="6" width="108" height="108" rx="18" fill="#e7fffb"/>
-            <g transform="translate(16,12)">
-              <circle cx="44" cy="34" r="26" fill="#ffe7cf"/>
-              <path d="M28 26 C36 16, 58 16, 66 26" fill="#4b3a3a"/>
-              <circle cx="36" cy="36" r="3" fill="#2b2b2b"/>
-              <circle cx="52" cy="36" r="3" fill="#2b2b2b"/>
-              <path d="M36 46 Q44 52 52 46" stroke="#7a4b2b" stroke-width="2" fill="transparent"/>
-              <!-- body / coat -->
-              <rect x="16" y="64" width="56" height="26" rx="6" fill="#e6f6f0"/>
-              <path d="M30 64 v-8 a8 8 0 0 1 8 -8 h12 a8 8 0 0 1 8 8 v8" fill="#dbeffc"/>
-              <!-- stethoscope -->
-              <path d="M80 78 C76 70, 64 68, 56 68" stroke="#2b2b2b" stroke-width="3" fill="none" stroke-linecap="round"/>
-              <circle cx="84" cy="76" r="4" fill="#2b2b2b"/>
-            </g>
-          </svg>
-          <div class="thumbLabel">Aarav</div>
-          <div style="font-size:13px;color:var(--muted)">Friendly, curious</div>
-        </div>
+    <div style="display:flex;flex-direction:column;">
+      <div class="messages" id="messages">
+        <div class="msg bot">👋 Hi there! What topic will you teach me today?</div>
+      </div>
 
-        <!-- Avatar 2: Maya -->
-        <div class="avatar-card" id="avatarMaya" role="button" tabindex="0" aria-pressed="false" aria-label="Choose Maya">
-          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect x="6" y="6" width="108" height="108" rx="18" fill="#fff6fb"/>
-            <g transform="translate(16,12)">
-              <circle cx="44" cy="34" r="26" fill="#ffe6d6"/>
-              <path d="M30 26 C36 18, 58 18, 64 26" fill="#3d2f2f"/>
-              <circle cx="36" cy="36" r="3" fill="#2b2b2b"/>
-              <circle cx="52" cy="36" r="3" fill="#2b2b2b"/>
-              <path d="M36 48 Q44 54 52 48" stroke="#7a4b2b" stroke-width="2" fill="transparent"/>
-              <rect x="16" y="64" width="56" height="26" rx="6" fill="#fff7e6"/>
-              <path d="M30 64 v-8 a8 8 0 0 1 8 -8 h12 a8 8 0 0 1 8 8 v8" fill="#e9e6ff"/>
-              <!-- stethoscope -->
-              <path d="M80 78 C76 70, 64 68, 56 68" stroke="#2b2b2b" stroke-width="3" fill="none" stroke-linecap="round"/>
-              <circle cx="84" cy="76" r="4" fill="#2b2b2b"/>
-            </g>
-          </svg>
-          <div class="thumbLabel">Maya</div>
-          <div style="font-size:13px;color:var(--muted)">Calm, thoughtful</div>
+      <div class="composer">
+        <textarea id="textInput" placeholder="Type your explanation here..."></textarea>
+
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+          <label class="upload" title="Upload image">
+            <input id="imageInput" type="file" accept="image/*" style="display:none" />
+            📷
+          </label>
+          <button class="mic" id="micBtn" title="Record audio">🎤</button>
+          <button class="send" id="sendBtn">Send</button>
         </div>
       </div>
 
-      <div class="controls">
-        <button class="btn ghost" id="skipAvatar">Skip</button>
-        <button class="btn primary" id="nextToBg">Next — choose background</button>
-      </div>
-    </section>
-
-    <!-- STEP 2: Backgrounds -->
-    <section id="panelBg" class="panel hidden" aria-labelledby="bgTitle">
-      <h2 id="bgTitle" class="title center">Choose a background</h2>
-      <p class="subtitle center">Pick a cute, cartoonish setting for your study session.</p>
-
-      <div class="bg-grid" role="list">
-        <div class="bg-thumb" id="bgLibrary" title="Library" aria-label="Library background"></div>
-        <div class="bg-thumb" id="bgCoffee" title="Coffee shop" aria-label="Coffee shop background"></div>
-        <div class="bg-thumb" id="bgGarden" title="Garden" aria-label="Garden background"></div>
-      </div>
-
-      <div class="controls">
-        <button class="btn ghost" id="backToAvatar">Back</button>
-        <button class="btn primary" id="toChat">Go to chat</button>
-      </div>
-    </section>
-
-    <!-- STEP 3: Chat -->
-    <section id="panelChat" class="panel chat-stage hidden" aria-labelledby="chatTitle">
-      <h2 id="chatTitle" class="title">Teach Menti</h2>
-      <p class="subtitle">Explain a topic. Menti will ask follow-ups and summarise.</p>
-
-      <div class="chat-bg" id="chatBg"></div>
-
-      <div class="chat-ui" role="region" aria-label="Chat UI">
-        <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
-          <div id="avatarLarge" class="avatar-large"></div>
-          <div class="small" id="avatarName"></div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div class="thought" id="thoughtBubble">Hello — tell me what topic you'll teach me today!</div>
-
-          <div class="messages" id="messages" role="log" aria-live="polite"></div>
-
-          <div class="composer">
-            <textarea id="textInput" placeholder="Type your explanation here..."></textarea>
-            <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-              <label class="upload" title="Upload image" style="cursor:pointer;padding:8px;border-radius:8px;border:1px solid #ddd;background:#fff">
-                <input id="imageInput" type="file" accept="image/*" style="display:none" />
-                📷
-              </label>
-              <button id="sendBtn" class="send">Send</button>
-            </div>
-          </div>
-
-          <div class="small">Tip: teach as if you're explaining to a junior student. Menti will ask follow-ups.</div>
-        </div>
-      </div>
-    </section>
-
+      <div class="small" style="margin-top:8px;">Tip: You can send text, voice, or image explanations.</div>
+    </div>
   </div>
+</div>
 
 <script>
-/* ---------- DOM ---------- */
-const panelAvatar = document.getElementById('panelAvatar');
-const panelBg = document.getElementById('panelBg');
-const panelChat = document.getElementById('panelChat');
-
-const avatarAarav = document.getElementById('avatarAarav');
-const avatarMaya = document.getElementById('avatarMaya');
-const nextToBg = document.getElementById('nextToBg');
-const skipAvatar = document.getElementById('skipAvatar');
-
-const bgLibrary = document.getElementById('bgLibrary');
-const bgCoffee = document.getElementById('bgCoffee');
-const bgGarden = document.getElementById('bgGarden');
-const toChat = document.getElementById('toChat');
-const backToAvatar = document.getElementById('backToAvatar');
-
-const avatarLarge = document.getElementById('avatarLarge');
-const avatarName = document.getElementById('avatarName');
-const chatBg = document.getElementById('chatBg');
-const thoughtBubble = document.getElementById('thoughtBubble');
 const messagesEl = document.getElementById('messages');
 const textInput = document.getElementById('textInput');
 const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
 const imageInput = document.getElementById('imageInput');
 
-/* ---------- state ---------- */
-let state = {
-  avatar: localStorage.getItem('menti_avatar') || null,   // 'aarav' | 'maya'
-  bg: localStorage.getItem('menti_bg') || null,          // 'library'|'coffee'|'garden'
-  messages: [{ role:'system', content: "You are Menti — an educational study buddy. The user teaches you; ask 2-3 short follow-up questions, give a short summary and an encouraging sentence. Do not provide treatment advice." }]
-};
+let mediaRecorder = null;
+let audioChunks = [];
 
-/* ---------- inline SVG backgrounds ---------- */
-const BG_SVGS = {
-  library: encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500'><rect width='100%' height='100%' fill='#f6fbff'/><g transform='translate(40,40)'><rect width='720' height='420' rx='18' fill='#fff'/><g transform='translate(30,30)'><rect x='0' y='0' width='120' height='320' rx='8' fill='#ffe6c8'/><rect x='140' y='0' width='120' height='320' rx='8' fill='#ffd7e0'/><rect x='280' y='0' width='120' height='320' rx='8' fill='#d7f2f0'/><rect x='420' y='0' width='120' height='320' rx='8' fill='#d9e6ff'/></g></g></svg>`),
-  coffee: encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500'><rect width='100%' height='100%' fill='#fff6f3'/><g transform='translate(40,40)'><rect width='720' height='420' rx='18' fill='#fff'/><g transform='translate(40,40)'><rect x='0' y='0' width='260' height='220' rx='12' fill='#fff2e6'/><circle cx='520' cy='120' r='40' fill='#f6e9d6'/></g></g></svg>`),
-  garden: encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500'><rect width='100%' height='100%' fill='#f6fff8'/><g transform='translate(40,40)'><rect width='720' height='420' rx='18' fill='#fff'/><g transform='translate(80,40)'><ellipse cx='260' cy='280' rx='260' ry='70' fill='#e6fbe8'/><g transform='translate(40,10)'><circle cx='30' cy='30' r='12' fill='#9fe39f'/><circle cx='90' cy='10' r='10' fill='#7fd792'/></g></g></g></svg>`)
-};
-
-/* ---------- avatar SVG strings for large display ---------- */
-const AVATARS = {
-  aarav: `<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' rx='20' fill='#e7fffb'/><g transform='translate(28,22)'><circle cx='74' cy='42' r='34' fill='#ffe7cf'/><path d='M52 34 C64 22, 92 22, 104 34' fill='#4b3a3a'/><circle cx='64' cy='42' r='4' fill='#2b2b2b'/><circle cx='84' cy='42' r='4' fill='#2b2b2b'/><path d='M64 56 Q74 66 84 56' stroke='#7a4b2b' stroke-width='2' fill='transparent'/><rect x='34' y='104' width='120' height='40' rx='10' fill='#e6f6f0'/><path d='M120 120 C110 112, 100 110, 94 110' stroke='#2b2b2b' stroke-width='4' fill='none' stroke-linecap='round'/></g></svg>`,
-  maya: `<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' rx='20' fill='#fff6fb'/><g transform='translate(28,22)'><circle cx='74' cy='42' r='34' fill='#ffe6d6'/><path d='M58 34 C68 24, 92 24, 102 34' fill='#3d2f2f'/><circle cx='64' cy='42' r='4' fill='#2b2b2b'/><circle cx='84' cy='42' r='4' fill='#2b2b2b'/><path d='M64 58 Q74 66 84 58' stroke='#7a4b2b' stroke-width='2' fill='transparent'/><rect x='34' y='104' width='120' height='40' rx='10' fill='#fff7e6'/><path d='M120 120 C110 112, 100 110, 94 110' stroke='#2b2b2b' stroke-width='4' fill='none' stroke-linecap='round'/></g></svg>`
-};
-
-/* ---------- set thumbnails for backgrounds ---------- */
-bgLibrary.style.backgroundImage = `url("data:image/svg+xml;utf8,${BG_SVGS.library}")`;
-bgLibrary.style.backgroundSize = 'cover';
-bgCoffee.style.backgroundImage = `url("data:image/svg+xml;utf8,${BG_SVGS.coffee}")`;
-bgCoffee.style.backgroundSize = 'cover';
-bgGarden.style.backgroundImage = `url("data:image/svg+xml;utf8,${BG_SVGS.garden}")`;
-bgGarden.style.backgroundSize = 'cover';
-
-/* ---------- helpers ---------- */
-function saveChoices(){
-  localStorage.setItem('menti_avatar', state.avatar || '');
-  localStorage.setItem('menti_bg', state.bg || '');
-}
-function showPanel(panel){ panelAvatar.classList.toggle('hidden', panel!=='avatar'); panelBg.classList.toggle('hidden', panel!=='bg'); panelChat.classList.toggle('hidden', panel!=='chat'); }
-
-/* render visual selection states */
-function setAvatarSelectedUI(){
-  avatarAarav.classList.toggle('selected', state.avatar === 'aarav');
-  avatarMaya.classList.toggle('selected', state.avatar === 'maya');
-}
-function setBgSelectedUI(){
-  bgLibrary.classList.toggle('selected', state.bg === 'library');
-  bgCoffee.classList.toggle('selected', state.bg === 'coffee');
-  bgGarden.classList.toggle('selected', state.bg === 'garden');
-}
-
-/* render chat scene */
-function renderChatScene(){
-  avatarLarge.innerHTML = state.avatar ? (state.avatar === 'aarav' ? AVATARS.aarav : AVATARS.maya) : '';
-  avatarName.textContent = state.avatar === 'aarav' ? 'Aarav' : (state.avatar === 'maya' ? 'Maya' : '');
-  if(state.bg){
-    chatBg.style.backgroundImage = `url("data:image/svg+xml;utf8,${BG_SVGS[state.bg]}")`;
-    chatBg.style.backgroundSize = 'cover';
-  } else {
-    chatBg.style.backgroundImage = '';
-  }
-}
-
-/* append message */
-function appendMessage(who, text, opt={}){
-  const wrapper = document.createElement('div');
-  wrapper.style.display = 'flex';
-  wrapper.style.flexDirection = 'column';
-  const bubble = document.createElement('div');
-  bubble.className = 'msg ' + (who==='user' ? 'you' : 'bot');
-  if(opt.imageData){
+/* --- Append message helper --- */
+function appendMessage(role, text, imageData) {
+  const msg = document.createElement('div');
+  msg.className = 'msg ' + (role === 'user' ? 'you' : 'bot');
+  if(imageData){
     const img = document.createElement('img');
-    img.src = opt.imageData;
-    img.style.maxWidth = '320px';
+    img.src = imageData;
+    img.style.maxWidth = '280px';
     img.style.borderRadius = '10px';
-    bubble.appendChild(img);
-    if(text){
-      const p = document.createElement('div'); p.textContent = text; p.style.marginTop = '8px';
-      bubble.appendChild(p);
+    msg.appendChild(img);
+    if(text){ 
+      const t = document.createElement('div');
+      t.textContent = text;
+      t.style.marginTop = '6px';
+      msg.appendChild(t);
     }
-  } else {
-    bubble.textContent = text;
-  }
-  wrapper.appendChild(bubble);
-  messagesEl.appendChild(wrapper);
+  } else msg.textContent = text;
+  messagesEl.appendChild(msg);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-/* ---------- initialization ---------- */
-(function init(){
-  // restore selections
-  state.avatar = state.avatar || null;
-  state.bg = state.bg || null;
+/* --- Send to backend --- */
+async function sendToServer(userText) {
+  const thinking = document.createElement('div');
+  thinking.className = 'msg bot';
+  thinking.textContent = 'Thinking...';
+  messagesEl.appendChild(thinking);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 
-  setAvatarSelectedUI();
-  setBgSelectedUI();
-
-  // if both selected, jump to chat, else avatar(step1) or bg(step2)
-  if(state.avatar && state.bg){
-    renderChatScene();
-    showPanel('chat');
-    setTimeout(()=> startFirstQuestion(), 300);
-  } else if(state.avatar && !state.bg){
-    showPanel('bg');
-  } else {
-    showPanel('avatar');
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ messages:[{role:'user', content:userText}] })
+    });
+    const data = await res.json();
+    thinking.remove();
+    appendMessage('bot', data.content || "I didn't quite get that. Could you rephrase?");
+  } catch {
+    thinking.remove();
+    appendMessage('bot', 'Network error. Try again.');
   }
-})();
-
-/* ---------- interactions ---------- */
-/* avatar click handlers */
-function chooseAvatar(key){
-  state.avatar = key;
-  setAvatarSelectedUI();
-  saveChoices();
-  // automatically go to backgrounds step
-  setTimeout(()=> { showPanel('bg'); }, 180);
-}
-avatarAarav.addEventListener('click', ()=> chooseAvatar('aarav'));
-avatarMaya.addEventListener('click', ()=> chooseAvatar('maya'));
-
-/* keyboard accessible */
-[avatarAarav, avatarMaya].forEach(el => {
-  el.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') chooseAvatar(el.id==='avatarAarav' ? 'aarav' : 'maya'); });
-});
-
-/* next / skip */
-nextToBg.addEventListener('click', ()=>{
-  if(!state.avatar){
-    alert('Please pick an avatar or press Skip');
-    return;
-  }
-  showPanel('bg');
-});
-skipAvatar.addEventListener('click', ()=> showPanel('bg'));
-
-/* background selection handlers */
-function chooseBg(key){
-  state.bg = key;
-  setBgSelectedUI();
-  saveChoices();
-  // go to chat automatically
-  setTimeout(()=> {
-    renderChatScene();
-    showPanel('chat');
-    setTimeout(()=> startFirstQuestion(), 240);
-  }, 180);
-}
-bgLibrary.addEventListener('click', ()=> chooseBg('library'));
-bgCoffee.addEventListener('click', ()=> chooseBg('coffee'));
-bgGarden.addEventListener('click', ()=> chooseBg('garden'));
-
-/* keyboard accessible backgrounds */
-[bgLibrary, bgCoffee, bgGarden].forEach(el => {
-  el.addEventListener('keydown', e => { if(e.key==='Enter' || e.key===' ') el.click(); });
-});
-
-/* back to avatar */
-backToAvatar.addEventListener('click', ()=> showPanel('avatar'));
-
-/* ---------- first friendly question ---------- */
-function startFirstQuestion(){
-  const q = "Hi — I'm your study buddy! What topic will you teach me today? Explain it like you're teaching a junior student.";
-  thoughtBubble.textContent = q;
-  appendMessage('bot', q);
-  state.messages.push({ role:'assistant', content: q });
 }
 
-/* ---------- sending messages (simple) ---------- */
-sendBtn.addEventListener('click', async ()=>{
-  const txt = textInput.value.trim();
-  if(!txt){ textInput.focus(); return; }
-  appendMessage('user', txt);
-  state.messages.push({ role:'user', content: txt });
+/* --- Text Send --- */
+sendBtn.addEventListener('click', () => {
+  const text = textInput.value.trim();
+  if(!text) return;
+  appendMessage('user', text);
+  sendToServer(text);
   textInput.value = '';
-  // send to server
-  await sendToServer(txt);
 });
 
-/* Enter to send */
-textInput.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendBtn.click(); }
+textInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendBtn.click();
+  }
 });
 
-/* ---------- image upload ---------- */
-imageInput.addEventListener('change', (e)=>{
-  const file = e.target.files && e.target.files[0];
+/* --- Image Upload --- */
+imageInput.addEventListener('change', e => {
+  const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    const dataUrl = reader.result;
-    appendMessage('user', 'Uploaded an image', { imageData: dataUrl });
-    state.messages.push({ role:'user', content: `[image] ${file.name}` });
-    sendToServer(`[image] ${file.name} (data included)`);
+    const imgData = reader.result;
+    appendMessage('user', 'Uploaded an image', imgData);
+    sendToServer(`[Image uploaded: ${file.name}]`);
   };
   reader.readAsDataURL(file);
   imageInput.value = '';
 });
 
-/* ---------- send to server ---------- */
-async function sendToServer(userText){
-  // show thinking
-  const thinking = document.createElement('div');
-  thinking.className = 'msg bot';
-  thinking.innerHTML = 'Thinking…';
-  messagesEl.appendChild(thinking);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+/* --- Audio Recording --- */
+micBtn.addEventListener('click', async () => {
+  if(mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    micBtn.textContent = '🎤';
+    return;
+  }
 
   try {
-    const payload = { messages: [...state.messages, { role:'user', content: userText }] };
-    const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const json = await res.json();
-    thinking.remove();
-    if(json.error){
-      appendMessage('bot', 'Server error: ' + (json.message || json.error));
-      return;
-    }
-    const reply = json.content || '(no reply)';
-    state.messages.push({ role:'assistant', content: reply });
-    appendMessage('bot', reply);
-  } catch(err){
-    thinking.remove();
-    appendMessage('bot', 'Network error — please try again.');
-  }
-}
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
 
-/* expose state for debug */
-window._menti_state = state;
+    mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type:'audio/webm' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        appendMessage('user', 'Sent a voice message 🎙️');
+        sendToServer('[Audio message sent]');
+      };
+      reader.readAsDataURL(blob);
+      stream.getTracks().forEach(t => t.stop());
+    };
+
+    mediaRecorder.start();
+    micBtn.textContent = '⏹';
+  } catch(err) {
+    alert('Microphone access denied.');
+  }
+});
 </script>
 </body>
 </html>
