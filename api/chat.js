@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Safe storage in environment
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req, res) {
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
         {
           role: "system",
           content:
-            "You are Menti, a friendly AI study buddy for medical students. Always encourage, simplify, and never provide medical advice.",
+            "You are Menti, a friendly AI study buddy for medical students. Encourage learning but never provide medical advice.",
         },
         ...messages,
       ],
